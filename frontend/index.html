@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análisis Emocional a Color - Versión Avanzada</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        /* Mejoras adicionales de CSS inline */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .controls-container {
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .controls-container:hover {
+            transform: translateX(-50%) translateY(-2px);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+        }
+        
+        .form-control {
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus {
+            transform: scale(1.02);
+            box-shadow: 0 0 20px rgba(0,123,255,0.3);
+        }
+        
+        .btn {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        
+        .btn:active {
+            transform: translateY(-1px);
+        }
+        
+        .color-swatch {
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+        
+        .color-swatch::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            transition: left 0.6s ease;
+            pointer-events: none;
+        }
+        
+        .color-swatch:hover::before {
+            left: 100%;
+        }
+        
+        .loading {
+            background: linear-gradient(-45deg, #667eea, #764ba2, #667eea, #764ba2);
+            background-size: 400% 400%;
+            animation: gradientAnimation 3s ease infinite;
+            color: white;
+        }
+        
+        @keyframes gradientAnimation {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .gallery-container {
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            background: rgba(248, 249, 250, 0.95);
+            border-left: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .gallery-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(0,0,0,0.08);
+        }
+        
+        .gallery-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+        
+        .mini-palette {
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .mini-palette div {
+            transition: all 0.2s ease;
+        }
+        
+        /* Animación de pulso para el botón generar */
+        .pulse-btn {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(0, 123, 255, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 123, 255, 0); }
+        }
+        
+        /* Tooltip mejorado */
+        [title]:hover::after {
+            content: attr(title);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 1000;
+            margin-bottom: 5px;
+        }
+        
+        /* Scrollbar personalizado para la galería */
+        .gallery-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .gallery-container::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.1);
+            border-radius: 4px;
+        }
+        
+        .gallery-container::-webkit-scrollbar-thumb {
+            background: rgba(0,0,0,0.3);
+            border-radius: 4px;
+        }
+        
+        .gallery-container::-webkit-scrollbar-thumb:hover {
+            background: rgba(0,0,0,0.5);
+        }
+    </style>
+</head>
+<body>
+    <!-- Header con controles mejorados -->
+    <header class="controls-container">
+        <div class="input-group">
+            <button class="btn btn-outline-secondary" type="button" id="download-btn" title="Descargar paleta como imagen">
+                <i class="bi bi-download"></i>
+                <span class="d-none d-md-inline ms-1">Descargar</span>
+            </button>
+            <input type="text" class="form-control" placeholder="Escribe una palabra o frase para analizar su emoción..." id="text-input" maxlength="1000">
+            <button class="btn btn-primary pulse-btn" type="button" id="generate-btn">
+                <i class="bi bi-magic"></i> 
+                <span class="d-none d-sm-inline">Generar</span>
+            </button>
+            <button class="btn btn-outline-secondary" type="button" id="gallery-btn" title="Ver galería de paletas">
+                <i class="bi bi-images"></i> 
+                <span class="d-none d-md-inline ms-1">Galería</span>
+            </button>
+        </div>
+        
+        <!-- Indicador de estado -->
+        <div class="d-flex justify-content-between align-items-center mt-2 px-2">
+            <small class="text-muted">
+                <i class="bi bi-cpu"></i> Análisis avanzado con IA
+            </small>
+            <small class="text-muted" id="connection-status">
+                <i class="bi bi-circle-fill text-secondary"></i> Conectando...
+            </small>
+        </div>
+    </header>
+
+    <!-- Contenedor principal de la paleta -->
+    <main class="palette-container" id="palette-container">
+        <div class="color-swatch" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <div class="position-absolute top-50 start-50 translate-middle text-white text-center">
+                <i class="bi bi-palette2 fs-1 mb-2"></i>
+                <p class="mb-0">Escribe algo para comenzar</p>
+                <small>Tu emoción se convertirá en colores</small>
+            </div>
+        </div>
+        <div class="color-swatch" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);"></div>
+        <div class="color-swatch" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);"></div>
+        <div class="color-swatch" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);"></div>
+        <div class="color-swatch" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);"></div>
+    </main>
+
+    <!-- Panel lateral de galería mejorado -->
+    <div class="gallery-container" id="gallery-container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="mb-0">
+                <i class="bi bi-palette2 text-primary"></i> 
+                Galería
+            </h2>
+            <button class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('gallery-container').classList.remove('show')">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        
+        <!-- Estadísticas rápidas -->
+        <div class="row g-2 mb-3" id="gallery-stats">
+            <div class="col-6">
+                <div class="card card-body text-center p-2">
+                    <small class="text-muted">Total</small>
+                    <strong id="total-palettes">0</strong>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="card card-body text-center p-2">
+                    <small class="text-muted">Hoy</small>
+                    <strong id="today-palettes">0</strong>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Filtros -->
+        <div class="mb-3">
+            <select class="form-select form-select-sm" id="emotion-filter">
+                <option value="">Todas las emociones</option>
+                <option value="Euforia">🎉 Euforia</option>
+                <option value="Alegría">😊 Alegría</option>
+                <option value="Serenidad">😌 Serenidad</option>
+                <option value="Equilibrio">⚖️ Equilibrio</option>
+                <option value="Melancolía">😔 Melancolía</option>
+                <option value="Tristeza">😢 Tristeza</option>
+                <option value="Angustia">😰 Angustia</option>
+            </select>
+        </div>
+        
+        <!-- Grid de paletas -->
+        <div class="gallery-grid" id="gallery-grid">
+            <!-- Las paletas se cargan dinámicamente aquí -->
+        </div>
+        
+        <!-- Botón para limpiar historial -->
+        <div class="mt-4 text-center">
+            <button class="btn btn-sm btn-outline-danger" id="clear-history" style="display: none;">
+                <i class="bi bi-trash"></i> Limpiar historial
+            </button>
+        </div>
+    </div>
+
+    <!-- Toast para notificaciones -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="notification-toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <i class="bi bi-palette2 text-primary me-2"></i>
+                <strong class="me-auto">Análisis Emocional</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body" id="toast-body">
+                <!-- Mensaje dinámico -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de ayuda -->
+    <div class="modal fade" id="help-modal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-question-circle"></i> ¿Cómo funciona?
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <h6><i class="bi bi-1-circle text-primary"></i> Escribe tu emoción</h6>
+                    <p class="mb-3">Expresa cómo te sientes con palabras. Pueden ser frases como "Me siento muy feliz" o "Estoy un poco triste".</p>
+                    
+                    <h6><i class="bi bi-2-circle text-primary"></i> Análisis con IA</h6>
+                    <p class="mb-3">Nuestro sistema analiza tu texto usando algoritmos avanzados de procesamiento de lenguaje natural.</p>
+                    
+                    <h6><i class="bi bi-3-circle text-primary"></i> Colores únicos</h6>
+                    <p class="mb-3">Cada emoción se convierte en una paleta de colores basada en psicología del color y teoría cromática.</p>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-lightbulb"></i>
+                        <strong>Consejo:</strong> Haz clic en cualquier color para copiarlo al portapapeles.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botón de ayuda flotante -->
+    <button class="btn btn-primary rounded-circle position-fixed" style="bottom: 20px; right: 20px; z-index: 1000; width: 50px; height: 50px;" data-bs-toggle="modal" data-bs-target="#help-modal" title="Ayuda">
+        <i class="bi bi-question-lg"></i>
+    </button>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="script.js"></script>
+    
+    <!-- Script adicional para funcionalidades extras -->
+    <script>
+        // Funcionalidades adicionales
+        document.addEventListener('DOMContentLoaded', () => {
+            // Actualizar estado de conexión
+            const updateConnectionStatus = (connected) => {
+                const statusElement = document.getElementById('connection-status');
+                if (connected) {
+                    statusElement.innerHTML = '<i class="bi bi-circle-fill text-success"></i> Conectado';
+                } else {
+                    statusElement.innerHTML = '<i class="bi bi-circle-fill text-danger"></i> Desconectado';
+                }
+            };
+
+            // Mostrar toast de notificación
+            const showToast = (message, type = 'info') => {
+                const toast = document.getElementById('notification-toast');
+                const toastBody = document.getElementById('toast-body');
+                toastBody.textContent = message;
+                
+                // Cambiar estilo según tipo
+                toast.className = `toast ${type === 'success' ? 'text-bg-success' : type === 'error' ? 'text-bg-danger' : 'text-bg-info'}`;
+                
+                const bsToast = new bootstrap.Toast(toast);
+                bsToast.show();
+            };
+
+            // Verificar conexión periódicamente
+            setInterval(() => {
+                fetch('http://localhost:8000/health')
+                    .then(response => {
+                        updateConnectionStatus(response.ok);
+                    })
+                    .catch(() => {
+                        updateConnectionStatus(false);
+                    });
+            }, 30000); // Cada 30 segundos
+
+            // Filtro de emociones en galería
+            const emotionFilter = document.getElementById('emotion-filter');
+            if (emotionFilter) {
+                emotionFilter.addEventListener('change', (e) => {
+                    const filterValue = e.target.value.toLowerCase();
+                    const cards = document.querySelectorAll('.gallery-card');
+                    
+                    cards.forEach(card => {
+                        const emotionText = card.querySelector('small').textContent.toLowerCase();
+                        if (filterValue === '' || emotionText.includes(filterValue.toLowerCase())) {
+                            card.style.display = 'block';
+                        } else {
+                            card.style.display = 'none';
+                        }
+                    });
+                });
+            }
+
+            // Atajos de teclado
+            document.addEventListener('keydown', (e) => {
+                // Ctrl/Cmd + Enter para generar
+                if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                    e.preventDefault();
+                    document.getElementById('generate-btn').click();
+                }
+                
+                // Escape para cerrar galería
+                if (e.key === 'Escape') {
+                    document.getElementById('gallery-container').classList.remove('show');
+                }
+                
+                // Ctrl/Cmd + S para descargar
+                if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                    e.preventDefault();
+                    document.getElementById('download-btn').click();
+                }
+            });
+
+            // Mensaje de bienvenida
+            setTimeout(() => {
+                showToast('¡Bienvenido! Escribe algo para comenzar el análisis emocional.', 'info');
+            }, 2000);
+
+            console.log('🎨 Análisis Emocional a Color v2.0 - Sistema avanzado iniciado');
+        });
+    </script>
+</body>
+</html>

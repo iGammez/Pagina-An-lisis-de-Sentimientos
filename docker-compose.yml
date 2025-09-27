@@ -1,0 +1,15 @@
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - ./data:/app/data
+    environment:
+      - DATABASE_URL=sqlite:///./data/palettes.db
+    restart: unless-stopped
+
+networks:
+  default:
+    name: paginadesentimientos-network
