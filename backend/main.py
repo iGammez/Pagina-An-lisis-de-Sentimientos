@@ -315,6 +315,51 @@ def get_stats(db: Session = Depends(get_db)):
             "emotions_distribution": {},
             "error": "No se pudieron obtener las estadísticas"
         }
+# ==========================================
+# ENDPOINTS DE ELIMINACIÓN (CRUD COMPLETO)
+# ==========================================
+
+@app.delete("/palettes/{palette_id}")
+def delete_palette(palette_id: int, db: Session = Depends(get_db)):
+    """
+    Eliminar una paleta específica por ID
+    """
+    try:
+        palette = db.query(models.Palette).filter(models.Palette.id == palette_id).first()
+        
+        if not palette:
+            raise HTTPException(status_code=404, detail="Paleta no encontrada")
+        
+        db.delete(palette)
+        db.commit()
+        
+        logger.info(f"Paleta {palette_id} eliminada exitosamente")
+        return {"message": "Paleta eliminada exitosamente", "id": palette_id}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error al eliminar paleta {palette_id}: {e}")
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Error al eliminar paleta")
+
+@app.delete("/palettes/clear-all")
+def clear_all_palettes(db: Session = Depends(get_db)):
+    """
+    Eliminar TODAS las paletas (usar con precaución)
+    """
+    try:
+        count = db.query(models.Palette).count()
+        db.query(models.Palette).delete()
+        db.commit()
+        
+        logger.warning(f"Todas las paletas eliminadas: {count} registros")
+        return {"message": f"{count} paletas eliminadas", "count": count}
+        
+    except Exception as e:
+        logger.error(f"Error al limpiar paletas: {e}")
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Error al limpiar base de datos")
 
 if __name__ == "__main__":
     import uvicorn

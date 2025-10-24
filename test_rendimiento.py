@@ -61,11 +61,11 @@ class TestRendimiento:
                 print("✅ API disponible y funcionando")
                 return True
             else:
-                print(f"❌ API responde con código {response.status_code}")
+                print(f" API responde con código {response.status_code}")
                 return False
         except Exception as e:
-            print(f"❌ No se puede conectar a la API: {e}")
-            print("💡 Asegúrate de que el backend esté ejecutándose en localhost:8000")
+            print(f" No se puede conectar a la API: {e}")
+            print(" Asegúrate de que el backend esté ejecutándose en localhost:8000")
             return False
     
     def prueba_individual(self, texto, metodo="hybrid"):

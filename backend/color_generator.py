@@ -20,7 +20,7 @@ class AdvancedColorGenerator:
             "mood": "energetic"
         },
         "positive": {
-            "name": "Alegría",
+            "name": "Alegria",
             "base_hues": [30, 50, 160, 200],  # Naranjas cálidos, azul-verde
             "saturation_range": (0.6, 0.85),
             "lightness_range": (0.55, 0.75),
@@ -50,7 +50,7 @@ class AdvancedColorGenerator:
             "mood": "balanced"
         },
         "slightly_negative": {
-            "name": "Melancolía",
+            "name": "Melancolia",
             "base_hues": [200, 220, 240, 280],  # Azules grisáceos, violetas suaves
             "saturation_range": (0.3, 0.6),
             "lightness_range": (0.4, 0.65),

@@ -102,7 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        showStatus('🎨 Analizando emociones y generando paleta avanzada...');
+        showStatus('Analizando emociones y generando paleta avanzada...');
         
         try {
             console.log('Enviando petición a:', `${API_URL}/analyze`);
@@ -337,6 +337,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     generatePalette();
                     toggleGallery(); // Cerrar galería
                 });
+                // Botón de eliminar
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'btn btn-sm btn-danger mt-2';
+                deleteBtn.innerHTML = '<i class="bi bi-trash"></i> Eliminar';
+                deleteBtn.onclick = (e) => {
+                e.stopPropagation();
+                deletePalette(palette.id);
+                };
+                card.appendChild(deleteBtn);
                 
                 galleryGrid.appendChild(card);
 
@@ -428,16 +437,38 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(response => response.json())
         .then(data => {
             if (data.status === 'healthy') {
-                console.log('✅ Conexión con backend exitosa:', data);
-                showStatus('🎨 ¡Listo! Escribe algo para comenzar el análisis emocional');
+                console.log('Conexión con backend exitosa:', data);
+                showStatus('¡Listo! Escribe algo para comenzar el análisis emocional');
                 loadGallery();
             }
         })
         .catch(error => {
-            console.error('❌ No se pudo conectar con el backend:', error);
-            showStatus(`❌ No se puede conectar con el backend en ${API_URL}<br><br>
+            console.error('No se pudo conectar con el backend:', error);
+            showStatus(`No se puede conectar con el backend en ${API_URL}<br><br>
                 <small>Verifica que el backend esté funcionando</small>`, true);
         });
 
-    console.log('🚀 Frontend iniciado. API URL:', API_URL);
+    console.log('Frontend iniciado. API URL:', API_URL);
+    // Función para eliminar paleta
+const deletePalette = async (paletteId) => {
+    if (!confirm('¿Estás seguro de eliminar esta paleta?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_URL}/palettes/${paletteId}`, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok) {
+            console.log(`✅ Paleta ${paletteId} eliminada`);
+            loadGallery(); // Recargar galería
+        } else {
+            alert('Error al eliminar paleta');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('No se pudo eliminar la paleta');
+    }
+};
 });

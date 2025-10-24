@@ -2,7 +2,7 @@ services:
   backend:
     build: ./backend
     ports:
-      - "8000:8000"
+      - "8000:8000"  # Este está bien
     volumes:
       - ./backend:/app
       - ./data:/app/data
@@ -10,6 +10,12 @@ services:
       - DATABASE_URL=sqlite:///./data/palettes.db
     restart: unless-stopped
 
-networks:
-  default:
-    name: paginadesentimientos-network
+  frontend:
+    image: nginx:alpine
+    ports:
+      - "8081:80"  # ⬅️ CAMBIAR de 8080 a 8081
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+    depends_on:
+      - backend
+    restart: unless-stopped
